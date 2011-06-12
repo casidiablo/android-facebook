@@ -21,10 +21,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.Typeface;
+import android.graphics.*;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -182,7 +179,32 @@ public class FbDialog extends Dialog {
     private static Drawable getDefaultDrawable(String nextImage) {
         byte[] decode = Base64.decode(nextImage, Base64.DEFAULT);
         Bitmap bitmap = BitmapFactory.decodeByteArray(decode, 0, decode.length);
-        return new BitmapDrawable(bitmap);
+        return new BitmapDrawable(resize(bitmap, 1.5f));
+    }
+
+    private static Bitmap resize(Bitmap img, float factor) {
+        //actual width of the image (img is a Bitmap object)
+        int width = img.getWidth();
+        int height = img.getHeight();
+
+        //new width / height
+        int newWidth = (int) (width * factor);
+        int newHeight = (int) (height * factor);
+
+        // calculate the scale
+        float scaleWidth = (float) newWidth / width;
+        float scaleHeight = (float) newHeight / height;
+
+        // create a matrix for the manipulation
+        Matrix matrix = new Matrix();
+
+        // resize the bit map
+        matrix.postScale(scaleWidth, scaleHeight);
+
+        // recreate the new Bitmap and set it back
+        Bitmap result = Bitmap.createBitmap(img, 0, 0, width, height, matrix, true);
+        img.recycle();
+        return result;
     }
 
     String FACEBOOK_ICON = "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAAA3NCSVQFBgUzC42AAAABEElEQVQ4\n" +
