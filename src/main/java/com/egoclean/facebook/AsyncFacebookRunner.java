@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.facebook.android;
+package com.egoclean.facebook;
 
 import android.content.Context;
 import android.os.Bundle;

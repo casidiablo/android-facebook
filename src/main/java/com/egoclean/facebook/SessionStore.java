@@ -1,8 +1,7 @@
-package com.facebook.android;
+package com.egoclean.facebook;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import com.facebook.android.Facebook;
 
 public class SessionStore {
     private static final String TOKEN = "access_token";

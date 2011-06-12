@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.facebook.android;
+package com.egoclean.facebook;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -22,8 +22,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -35,7 +38,7 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.facebook.android.Facebook.DialogListener;
+import com.egoclean.facebook.Facebook.DialogListener;
 
 public class FbDialog extends Dialog {
 
@@ -43,12 +46,11 @@ public class FbDialog extends Dialog {
     static final float[] DIMENSIONS_DIFF_LANDSCAPE = {20, 60};
     static final float[] DIMENSIONS_DIFF_PORTRAIT = {40, 60};
     static final FrameLayout.LayoutParams FILL =
-        new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-                         ViewGroup.LayoutParams.FILL_PARENT);
+            new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+                    ViewGroup.LayoutParams.FILL_PARENT);
     static final int MARGIN = 4;
     static final int PADDING = 2;
     static final String DISPLAY_STRING = "touch";
-    static final String FB_ICON = "icon.png";
 
     private String mUrl;
     private DialogListener mListener;
@@ -76,12 +78,12 @@ public class FbDialog extends Dialog {
         setUpWebView();
         Display display = getWindow().getWindowManager().getDefaultDisplay();
         final float scale =
-            getContext().getResources().getDisplayMetrics().density;
+                getContext().getResources().getDisplayMetrics().density;
         int orientation =
-            getContext().getResources().getConfiguration().orientation;
+                getContext().getResources().getConfiguration().orientation;
         float[] dimensions =
-            (orientation == Configuration.ORIENTATION_LANDSCAPE)
-                    ? DIMENSIONS_DIFF_LANDSCAPE : DIMENSIONS_DIFF_PORTRAIT;
+                (orientation == Configuration.ORIENTATION_LANDSCAPE)
+                        ? DIMENSIONS_DIFF_LANDSCAPE : DIMENSIONS_DIFF_PORTRAIT;
         addContentView(mContent, new LinearLayout.LayoutParams(
                 display.getWidth() - ((int) (dimensions[0] * scale + 0.5f)),
                 display.getHeight() - ((int) (dimensions[1] * scale + 0.5f))));
@@ -89,8 +91,7 @@ public class FbDialog extends Dialog {
 
     private void setUpTitle() {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        /*Drawable icon = getContext().getResources().getDrawable(
-                R.drawable.facebook_icon);*/
+        Drawable icon = getDefaultDrawable(FACEBOOK_ICON);
         mTitle = new TextView(getContext());
         mTitle.setText("Facebook");
         mTitle.setTextColor(Color.WHITE);
@@ -98,8 +99,8 @@ public class FbDialog extends Dialog {
         mTitle.setBackgroundColor(FB_BLUE);
         mTitle.setPadding(MARGIN + PADDING, MARGIN, MARGIN, MARGIN);
         mTitle.setCompoundDrawablePadding(MARGIN + PADDING);
-        /*mTitle.setCompoundDrawablesWithIntrinsicBounds(
-                icon, null, null, null);*/
+        mTitle.setCompoundDrawablesWithIntrinsicBounds(
+                icon, null, null, null);
         mContent.addView(mTitle);
     }
 
@@ -130,7 +131,7 @@ public class FbDialog extends Dialog {
                 if (error == null) {
                     mListener.onComplete(values);
                 } else if (error.equals("access_denied") ||
-                           error.equals("OAuthAccessDeniedException")) {
+                        error.equals("OAuthAccessDeniedException")) {
                     mListener.onCancel();
                 } else {
                     mListener.onFacebookError(new FacebookError(error));
@@ -153,7 +154,7 @@ public class FbDialog extends Dialog {
 
         @Override
         public void onReceivedError(WebView view, int errorCode,
-                String description, String failingUrl) {
+                                    String description, String failingUrl) {
             super.onReceivedError(view, errorCode, description, failingUrl);
             mListener.onError(
                     new DialogError(description, errorCode, failingUrl));
@@ -176,6 +177,19 @@ public class FbDialog extends Dialog {
             }
             mSpinner.dismiss();
         }
-
     }
+
+    private static Drawable getDefaultDrawable(String nextImage) {
+        byte[] decode = Base64.decode(nextImage, Base64.DEFAULT);
+        Bitmap bitmap = BitmapFactory.decodeByteArray(decode, 0, decode.length);
+        return new BitmapDrawable(bitmap);
+    }
+
+    String FACEBOOK_ICON = "iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAIAAAAC64paAAAAA3NCSVQFBgUzC42AAAABEElEQVQ4\n" +
+            "jcWToW7DMBCGv0QGjjTgsFYqcGg1MrjAwb1BQ8c2WjKwt9jYRsf6GnuEoEkLmJSxGEyKQcGA3TRq\n" +
+            "0rrdwA78Ot3v+L/7z4mK+9VH1YAFeRLO9TT+qhqwCfJULKs6brEgf4ciQbbYAzjR6bLIs5lSSgLG\n" +
+            "2OvbF8eKoMKyyC/OJ2xCKdmxcXC2bKbYDc+GlV23QF48dW4fq9zJDdlj3PYxZKOrxfOoz2+vd4NR\n" +
+            "6fp3Z/Yq7/sSSM9CezbG9naD27CF+tM03/5MdLl4PPyGu/77bvPPbv9JWbTYuZ5u7ibZ6mxzF5lO\n" +
+            "+/WyamJ/twBIBKO5j926n5l2DcCa8ZzRuoxuHlblex38q4eY6fQHcnQL4QUsWLMAAAAASUVORK5C\n" +
+            "YII=";
 }

@@ -1,7 +1,4 @@
-package com.facebook.android;
-
-import com.facebook.android.AsyncFacebookRunner;
-import com.facebook.android.FacebookError;
+package com.egoclean.facebook;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

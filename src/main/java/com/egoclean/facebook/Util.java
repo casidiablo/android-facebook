@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.facebook.android;
+package com.egoclean.facebook;
 
 import android.app.AlertDialog.Builder;
 import android.content.Context;
