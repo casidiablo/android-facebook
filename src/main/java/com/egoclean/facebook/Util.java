@@ -16,6 +16,7 @@
 
 package com.egoclean.facebook;
 
+import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.os.Bundle;
@@ -284,7 +285,10 @@ public final class Util {
         Builder alertBuilder = new Builder(context);
         alertBuilder.setTitle(title);
         alertBuilder.setMessage(text);
-        alertBuilder.create().show();
+        AlertDialog dialog = alertBuilder.create();
+        try {
+            dialog.show();
+        } catch (Exception ignore) {}
     }
 
 }

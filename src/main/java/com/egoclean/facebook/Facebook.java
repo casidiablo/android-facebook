@@ -597,7 +597,9 @@ public class Facebook {
 
         Dialog dialog = getDialog(context, action, parameters, listener);
         if (dialog != null) {
-            dialog.show();
+            try {
+                dialog.show();
+            } catch (Exception ignore) {}
         }
     }
 
