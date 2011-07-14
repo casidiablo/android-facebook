@@ -27,7 +27,7 @@ import java.net.MalformedURLException;
  * A sample implementation of asynchronous API requests. This class provides
  * the ability to execute API methods and have the call return immediately,
  * without blocking the calling thread. This is necessary when accessing the
- * API in the UI thread, for instance. The request response is returned to 
+ * API in the UI thread, for instance. The request response is returned to
  * the caller via a callback interface, which the developer must implement.
  *
  * This sample implementation simply spawns a new thread for each request,
@@ -81,18 +81,26 @@ public class AsyncFacebookRunner {
             @Override public void run() {
                 try {
                     String response = fb.logout(context);
-                    if (response.length() == 0 || response.equals("false")){
+                    if ((response.length() == 0 || response.equals("false")) && listener != null){
                         listener.onFacebookError(new FacebookError(
                                 "auth.expireSession failed"), state);
                         return;
                     }
-                    listener.onComplete(response, state);
+                    if (listener != null) {
+                        listener.onComplete(response, state);
+                    }
                 } catch (FileNotFoundException e) {
-                    listener.onFileNotFoundException(e, state);
+                    if (listener != null) {
+                        listener.onFileNotFoundException(e, state);
+                    }
                 } catch (MalformedURLException e) {
-                    listener.onMalformedURLException(e, state);
+                    if (listener != null) {
+                        listener.onMalformedURLException(e, state);
+                    }
                 } catch (IOException e) {
-                    listener.onIOException(e, state);
+                    if (listener != null) {
+                        listener.onIOException(e, state);
+                    }
                 }
             }
         }.start();
