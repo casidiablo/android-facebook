@@ -109,6 +109,7 @@ public class FbDialog extends Dialog {
         mWebView.getSettings().setJavaScriptEnabled(true);
         mWebView.loadUrl(mUrl);
         mWebView.setLayoutParams(FILL);
+        mWebView.clearCache(true);
         mContent.addView(mWebView);
     }
 
