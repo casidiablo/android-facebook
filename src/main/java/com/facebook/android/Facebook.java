@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.egoclean.facebook;
+package com.facebook.android;
 
 import android.Manifest;
 import android.app.Activity;
@@ -355,7 +355,7 @@ public class Facebook {
                     if (error.equals(SINGLE_SIGN_ON_DISABLED)
                             || error.equals("AndroidAuthKillSwitchException")) {
                         Log.d("Facebook-authorize", "Hosted auth currently "
-                            + "disabled. Retrying dialog auth...");
+                                + "disabled. Retrying dialog auth...");
                         startDialogAuth(mAuthActivity, mAuthPermissions);
                     } else if (error.equals("access_denied")
                             || error.equals("OAuthAccessDeniedException")) {
@@ -417,8 +417,8 @@ public class Facebook {
      *            The Android context in which the logout should be called: it
      *            should be the same context in which the login occurred in
      *            order to clear any stored cookies
-     * @throws IOException
-     * @throws MalformedURLException
+     * @throws java.io.IOException
+     * @throws java.net.MalformedURLException
      * @return JSON string representation of the auth.expireSession response
      *            ("true" if successful)
      */
@@ -453,9 +453,9 @@ public class Facebook {
      * @param parameters
      *            Key-value pairs of parameters to the request. Refer to the
      *            documentation: one of the parameters must be "method".
-     * @throws IOException
+     * @throws java.io.IOException
      *            if a network error occurs
-     * @throws MalformedURLException
+     * @throws java.net.MalformedURLException
      *            if accessing an invalid endpoint
      * @throws IllegalArgumentException
      *            if one of the parameters is not "method"
@@ -483,8 +483,8 @@ public class Facebook {
      *            Path to resource in the Facebook graph, e.g., to fetch data
      *            about the currently logged authenticated user, provide "me",
      *            which will fetch http://graph.facebook.com/me
-     * @throws IOException
-     * @throws MalformedURLException
+     * @throws java.io.IOException
+     * @throws java.net.MalformedURLException
      * @return JSON string representation of the response
      */
     public String request(String graphPath)
@@ -510,8 +510,8 @@ public class Facebook {
      *            parameters "q" : "facebook" would produce a query for the
      *            following graph resource:
      *            https://graph.facebook.com/search?q=facebook
-     * @throws IOException
-     * @throws MalformedURLException
+     * @throws java.io.IOException
+     * @throws java.net.MalformedURLException
      * @return JSON string representation of the response
      */
     public String request(String graphPath, Bundle parameters)
@@ -540,8 +540,8 @@ public class Facebook {
      *            https://graph.facebook.com/search?q=facebook
      * @param httpMethod
      *            http verb, e.g. "GET", "POST", "DELETE"
-     * @throws IOException
-     * @throws MalformedURLException
+     * @throws java.io.IOException
+     * @throws java.net.MalformedURLException
      * @return JSON string representation of the response
      */
     public String request(String graphPath, Bundle params, String httpMethod)

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.egoclean.facebook;
+package com.facebook.android;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -35,7 +35,7 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.egoclean.facebook.Facebook.DialogListener;
+import com.facebook.android.Facebook.DialogListener;
 
 public class FbDialog extends Dialog {
 
@@ -43,8 +43,8 @@ public class FbDialog extends Dialog {
     static final float[] DIMENSIONS_DIFF_LANDSCAPE = {20, 60};
     static final float[] DIMENSIONS_DIFF_PORTRAIT = {40, 60};
     static final FrameLayout.LayoutParams FILL =
-            new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-                    ViewGroup.LayoutParams.FILL_PARENT);
+        new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+                         ViewGroup.LayoutParams.FILL_PARENT);
     static final int MARGIN = 4;
     static final int PADDING = 2;
     static final String DISPLAY_STRING = "touch";
@@ -75,12 +75,12 @@ public class FbDialog extends Dialog {
         setUpWebView();
         Display display = getWindow().getWindowManager().getDefaultDisplay();
         final float scale =
-                getContext().getResources().getDisplayMetrics().density;
+            getContext().getResources().getDisplayMetrics().density;
         int orientation =
-                getContext().getResources().getConfiguration().orientation;
+            getContext().getResources().getConfiguration().orientation;
         float[] dimensions =
-                (orientation == Configuration.ORIENTATION_LANDSCAPE)
-                        ? DIMENSIONS_DIFF_LANDSCAPE : DIMENSIONS_DIFF_PORTRAIT;
+            (orientation == Configuration.ORIENTATION_LANDSCAPE)
+                    ? DIMENSIONS_DIFF_LANDSCAPE : DIMENSIONS_DIFF_PORTRAIT;
         addContentView(mContent, new LinearLayout.LayoutParams(
                 display.getWidth() - ((int) (dimensions[0] * scale + 0.5f)),
                 display.getHeight() - ((int) (dimensions[1] * scale + 0.5f))));
@@ -128,7 +128,7 @@ public class FbDialog extends Dialog {
                 if (error == null) {
                     mListener.onComplete(values);
                 } else if (error.equals("access_denied") ||
-                        error.equals("OAuthAccessDeniedException")) {
+                           error.equals("OAuthAccessDeniedException")) {
                     mListener.onCancel();
                 } else {
                     mListener.onFacebookError(new FacebookError(error));
@@ -151,7 +151,7 @@ public class FbDialog extends Dialog {
 
         @Override
         public void onReceivedError(WebView view, int errorCode,
-                                    String description, String failingUrl) {
+                String description, String failingUrl) {
             super.onReceivedError(view, errorCode, description, failingUrl);
             mListener.onError(
                     new DialogError(description, errorCode, failingUrl));

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.egoclean.facebook;
+package com.facebook.android;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -27,7 +27,7 @@ import java.net.MalformedURLException;
  * A sample implementation of asynchronous API requests. This class provides
  * the ability to execute API methods and have the call return immediately,
  * without blocking the calling thread. This is necessary when accessing the
- * API in the UI thread, for instance. The request response is returned to
+ * API in the UI thread, for instance. The request response is returned to 
  * the caller via a callback interface, which the developer must implement.
  *
  * This sample implementation simply spawns a new thread for each request,
@@ -78,7 +78,8 @@ public class AsyncFacebookRunner {
                        final RequestListener listener,
                        final Object state) {
         new Thread() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 try {
                     String response = fb.logout(context);
                     if ((response.length() == 0 || response.equals("false")) && listener != null){
@@ -256,7 +257,8 @@ public class AsyncFacebookRunner {
                         final RequestListener listener,
                         final Object state) {
         new Thread() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 try {
                     String resp = fb.request(graphPath, parameters, httpMethod);
                     listener.onComplete(resp, state);
