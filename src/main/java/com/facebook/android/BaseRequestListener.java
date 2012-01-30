@@ -1,4 +1,4 @@
-package com.egoclean.facebook;
+package com.facebook.android;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.egoclean.facebook;
+package com.facebook.android;
 
 import java.util.ConcurrentModificationException;
 import java.util.LinkedList;

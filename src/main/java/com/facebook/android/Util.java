@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.egoclean.facebook;
+package com.facebook.android;
 
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -83,8 +83,10 @@ public final class Util {
             String array[] = s.split("&");
             for (String parameter : array) {
                 String v[] = parameter.split("=");
-                params.putString(URLDecoder.decode(v[0]),
-                                 URLDecoder.decode(v[1]));
+                if (v.length >= 2) {
+                    params.putString(URLDecoder.decode(v[0]),
+                            URLDecoder.decode(v[1]));
+                }
             }
         }
         return params;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.egoclean.facebook;
+package com.facebook.android;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -78,21 +78,30 @@ public class AsyncFacebookRunner {
                        final RequestListener listener,
                        final Object state) {
         new Thread() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 try {
                     String response = fb.logout(context);
-                    if (response.length() == 0 || response.equals("false")){
+                    if ((response.length() == 0 || response.equals("false")) && listener != null){
                         listener.onFacebookError(new FacebookError(
                                 "auth.expireSession failed"), state);
                         return;
                     }
-                    listener.onComplete(response, state);
+                    if (listener != null) {
+                        listener.onComplete(response, state);
+                    }
                 } catch (FileNotFoundException e) {
-                    listener.onFileNotFoundException(e, state);
+                    if (listener != null) {
+                        listener.onFileNotFoundException(e, state);
+                    }
                 } catch (MalformedURLException e) {
-                    listener.onMalformedURLException(e, state);
+                    if (listener != null) {
+                        listener.onMalformedURLException(e, state);
+                    }
                 } catch (IOException e) {
-                    listener.onIOException(e, state);
+                    if (listener != null) {
+                        listener.onIOException(e, state);
+                    }
                 }
             }
         }.start();
@@ -248,7 +257,8 @@ public class AsyncFacebookRunner {
                         final RequestListener listener,
                         final Object state) {
         new Thread() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 try {
                     String resp = fb.request(graphPath, parameters, httpMethod);
                     listener.onComplete(resp, state);

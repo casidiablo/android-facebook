@@ -1,4 +1,4 @@
-package com.egoclean.facebook;
+package com.facebook.android;
 
 import android.content.Context;
 import android.content.SharedPreferences;
