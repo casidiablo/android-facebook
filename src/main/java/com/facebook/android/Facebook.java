@@ -19,15 +19,13 @@ package com.facebook.android;
 import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.ActivityNotFoundException;
-import android.content.Context;
-import android.content.Intent;
+import android.content.*;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.content.pm.Signature;
-import android.os.Bundle;
+import android.os.*;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.CookieSyncManager;
@@ -42,9 +40,9 @@ import java.net.MalformedURLException;
  * and Graph APIs, and start user interface interactions with the API (such as
  * pop-ups promoting for credentials, permissions, stream posts, etc.)
  *
- * @author  Jim Brusstar (jimbru@facebook.com),
- *          Yariv Sadan (yariv@facebook.com),
- *          Luke Shepard (lshepard@facebook.com)
+ * @author Jim Brusstar (jimbru@facebook.com),
+ *         Yariv Sadan (yariv@facebook.com),
+ *         Luke Shepard (lshepard@facebook.com)
  */
 public class Facebook {
 
@@ -64,13 +62,14 @@ public class Facebook {
 
     // Facebook server endpoints: may be modified in a subclass for testing
     protected static String DIALOG_BASE_URL =
-        "https://m.facebook.com/dialog/";
+            "https://m.facebook.com/dialog/";
     protected static String GRAPH_BASE_URL =
-        "https://graph.facebook.com/";
+            "https://graph.facebook.com/";
     protected static String RESTSERVER_URL =
-        "https://api.facebook.com/restserver.php";
+            "https://api.facebook.com/restserver.php";
 
     private String mAccessToken = null;
+    private long mLastAccessUpdate = 0;
     private long mAccessExpires = 0;
     private String mAppId;
 
@@ -79,54 +78,57 @@ public class Facebook {
     private int mAuthActivityCode;
     private DialogListener mAuthDialogListener;
 
+    // If the last time we extended the access token was more than 24 hours ago
+    // we try to refresh the access token again.
+    final private long REFRESH_TOKEN_BARRIER = 24L * 60L * 60L * 1000L;
+
     /**
      * Constructor for Facebook object.
      *
-     * @param appId
-     *          Your Facebook application ID. Found at
-     *          www.facebook.com/developers/apps.php.
+     * @param appId Your Facebook application ID. Found at
+     *              www.facebook.com/developers/apps.php.
      */
     public Facebook(String appId) {
         if (appId == null) {
             throw new IllegalArgumentException(
                     "You must specify your application ID when instantiating " +
-                    "a Facebook object. See README for details.");
+                            "a Facebook object. See README for details.");
         }
         mAppId = appId;
     }
 
     /**
      * Default authorize method. Grants only basic permissions.
-     *
+     * <p/>
      * See authorize() below for @params.
      */
     public void authorize(Activity activity, final DialogListener listener) {
-        authorize(activity, new String[] {}, DEFAULT_AUTH_ACTIVITY_CODE,
+        authorize(activity, new String[]{}, DEFAULT_AUTH_ACTIVITY_CODE,
                 listener);
     }
 
     /**
      * Authorize method that grants custom permissions.
-     *
+     * <p/>
      * See authorize() below for @params.
      */
     public void authorize(Activity activity, String[] permissions,
-            final DialogListener listener) {
+                          final DialogListener listener) {
         authorize(activity, permissions, DEFAULT_AUTH_ACTIVITY_CODE, listener);
     }
 
     /**
      * Full authorize method.
-     *
+     * <p/>
      * Starts either an Activity or a dialog which prompts the user to log in to
      * Facebook and grant the requested permissions to the given application.
-     *
+     * <p/>
      * This method will, when possible, use Facebook's single sign-on for
      * Android to obtain an access token. This involves proxying a call through
      * the Facebook for Android stand-alone application, which will handle the
      * authentication flow, and return an OAuth access token for making API
      * calls.
-     *
+     * <p/>
      * Because this process will not be available for all users, if single
      * sign-on is not possible, this method will automatically fall back to the
      * OAuth 2.0 User-Agent flow. In this flow, the user credentials are handled
@@ -134,51 +136,47 @@ public class Facebook {
      * such, the dialog makes a network request and renders HTML content rather
      * than a native UI. The access token is retrieved from a redirect to a
      * special URL that the WebView handles.
-     *
+     * <p/>
      * Note that User credentials could be handled natively using the OAuth 2.0
      * Username and Password Flow, but this is not supported by this SDK.
-     *
+     * <p/>
      * See http://developers.facebook.com/docs/authentication/ and
      * http://wiki.oauth.net/OAuth-2 for more details.
-     *
+     * <p/>
      * Note that this method is asynchronous and the callback will be invoked in
      * the original calling thread (not in a background thread).
-     *
+     * <p/>
      * Also note that requests may be made to the API without calling authorize
      * first, in which case only public information is returned.
-     *
+     * <p/>
      * IMPORTANT: Note that single sign-on authentication will not function
      * correctly if you do not include a call to the authorizeCallback() method
      * in your onActivityResult() function! Please see below for more
      * information. single sign-on may be disabled by passing FORCE_DIALOG_AUTH
      * as the activityCode parameter in your call to authorize().
      *
-     * @param activity
-     *            The Android activity in which we want to display the
-     *            authorization dialog.
-     * @param permissions
-     *            A list of permissions required for this application: e.g.
-     *            "read_stream", "publish_stream", "offline_access", etc. see
-     *            http://developers.facebook.com/docs/authentication/permissions
-     *            This parameter should not be null -- if you do not require any
-     *            permissions, then pass in an empty String array.
-     * @param activityCode
-     *            Single sign-on requires an activity result to be called back
-     *            to the client application -- if you are waiting on other
-     *            activities to return data, pass a custom activity code here to
-     *            avoid collisions. If you would like to force the use of legacy
-     *            dialog-based authorization, pass FORCE_DIALOG_AUTH for this
-     *            parameter. Otherwise just omit this parameter and Facebook
-     *            will use a suitable default. See
-     *            http://developer.android.com/reference/android/
-     *              app/Activity.html for more information.
-     * @param listener
-     *            Callback interface for notifying the calling application when
-     *            the authentication dialog has completed, failed, or been
-     *            canceled.
+     * @param activity     The Android activity in which we want to display the
+     *                     authorization dialog.
+     * @param permissions  A list of permissions required for this application: e.g.
+     *                     "read_stream", "publish_stream", "offline_access", etc. see
+     *                     http://developers.facebook.com/docs/authentication/permissions
+     *                     This parameter should not be null -- if you do not require any
+     *                     permissions, then pass in an empty String array.
+     * @param activityCode Single sign-on requires an activity result to be called back
+     *                     to the client application -- if you are waiting on other
+     *                     activities to return data, pass a custom activity code here to
+     *                     avoid collisions. If you would like to force the use of legacy
+     *                     dialog-based authorization, pass FORCE_DIALOG_AUTH for this
+     *                     parameter. Otherwise just omit this parameter and Facebook
+     *                     will use a suitable default. See
+     *                     http://developer.android.com/reference/android/
+     *                     app/Activity.html for more information.
+     * @param listener     Callback interface for notifying the calling application when
+     *                     the authentication dialog has completed, failed, or been
+     *                     canceled.
      */
     public void authorize(Activity activity, String[] permissions,
-            int activityCode, final DialogListener listener) {
+                          int activityCode, final DialogListener listener) {
 
         boolean singleSignOnStarted = false;
 
@@ -198,19 +196,15 @@ public class Facebook {
     /**
      * Internal method to handle single sign-on backend for authorize().
      *
-     * @param activity
-     *            The Android Activity that will parent the ProxyAuth Activity.
-     * @param applicationId
-     *            The Facebook application identifier.
-     * @param permissions
-     *            A list of permissions required for this application. If you do
-     *            not require any permissions, pass an empty String array.
-     * @param activityCode
-     *            Activity code to uniquely identify the result Intent in the
-     *            callback.
+     * @param activity      The Android Activity that will parent the ProxyAuth Activity.
+     * @param applicationId The Facebook application identifier.
+     * @param permissions   A list of permissions required for this application. If you do
+     *                      not require any permissions, pass an empty String array.
+     * @param activityCode  Activity code to uniquely identify the result Intent in the
+     *                      callback.
      */
     private boolean startSingleSignOn(Activity activity, String applicationId,
-            String[] permissions, int activityCode) {
+                                      String[] permissions, int activityCode) {
         boolean didSucceed = true;
         Intent intent = new Intent();
 
@@ -244,15 +238,15 @@ public class Facebook {
      * Query the signature for the application that would be invoked by the
      * given intent and verify that it matches the FB application's signature.
      *
-     * @param activity
+     * @param context
      * @param intent
      * @return true if the app's signature matches the expected signature.
      */
-    private boolean validateAppSignatureForIntent(Activity activity,
-            Intent intent) {
+    private boolean validateAppSignatureForIntent(Context context,
+                                                  Intent intent) {
 
         ResolveInfo resolveInfo =
-            activity.getPackageManager().resolveActivity(intent, 0);
+                context.getPackageManager().resolveActivity(intent, 0);
         if (resolveInfo == null) {
             return false;
         }
@@ -260,7 +254,7 @@ public class Facebook {
         String packageName = resolveInfo.activityInfo.packageName;
         PackageInfo packageInfo;
         try {
-            packageInfo = activity.getPackageManager().getPackageInfo(
+            packageInfo = context.getPackageManager().getPackageInfo(
                     packageName, PackageManager.GET_SIGNATURES);
         } catch (NameNotFoundException e) {
             return false;
@@ -278,13 +272,11 @@ public class Facebook {
      * Internal method to handle dialog-based authentication backend for
      * authorize().
      *
-     * @param activity
-     *            The Android Activity that will parent the auth dialog.
-     * @param permissions
-     *            A list of permissions required for this application. If you do
-     *            not require any permissions, pass an empty String array.
+     * @param activity    The Android Activity that will parent the auth dialog.
+     * @param permissions A list of permissions required for this application. If you do
+     *                    not require any permissions, pass an empty String array.
      */
-	private void startDialogAuth(Activity activity, String[] permissions) {
+    private void startDialogAuth(Activity activity, String[] permissions) {
         Bundle params = new Bundle();
         if (permissions.length > 0) {
             params.putString("scope", TextUtils.join(",", permissions));
@@ -304,7 +296,7 @@ public class Facebook {
                     mAuthDialogListener.onComplete(values);
                 } else {
                     mAuthDialogListener.onFacebookError(new FacebookError(
-                                    "Failed to receive access token."));
+                            "Failed to receive access token."));
                 }
             }
 
@@ -329,14 +321,14 @@ public class Facebook {
      * IMPORTANT: This method must be invoked at the top of the calling
      * activity's onActivityResult() function or Facebook authentication will
      * not function properly!
-     *
+     * <p/>
      * If your calling activity does not currently implement onActivityResult(),
      * you must implement it and include a call to this method if you intend to
      * use the authorize() method in this SDK.
-     *
+     * <p/>
      * For more information, see
      * http://developer.android.com/reference/android/app/
-     *   Activity.html#onActivityResult(int, int, android.content.Intent)
+     * Activity.html#onActivityResult(int, int, android.content.Intent)
      */
     public void authorizeCallback(int requestCode, int resultCode, Intent data) {
         if (requestCode == mAuthActivityCode) {
@@ -362,12 +354,16 @@ public class Facebook {
                         Log.d("Facebook-authorize", "Login canceled by user.");
                         mAuthDialogListener.onCancel();
                     } else {
+                        String description = data.getStringExtra("error_description");
+                        if (description != null) {
+                            error = error + ":" + description;
+                        }
                         Log.d("Facebook-authorize", "Login failed: " + error);
                         mAuthDialogListener.onFacebookError(
                                 new FacebookError(error));
                     }
 
-                // No errors.
+                    // No errors.
                 } else {
                     setAccessToken(data.getStringExtra(TOKEN));
                     setAccessExpiresIn(data.getStringExtra(EXPIRES));
@@ -379,11 +375,11 @@ public class Facebook {
                         mAuthDialogListener.onComplete(data.getExtras());
                     } else {
                         mAuthDialogListener.onFacebookError(new FacebookError(
-                                        "Failed to receive access token."));
+                                "Failed to receive access token."));
                     }
                 }
 
-            // An error occurred before we could be redirected.
+                // An error occurred before we could be redirected.
             } else if (resultCode == Activity.RESULT_CANCELED) {
 
                 // An Android error occured.
@@ -396,7 +392,7 @@ public class Facebook {
                                     data.getIntExtra("error_code", -1),
                                     data.getStringExtra("failing_url")));
 
-                // User pressed the 'back' button.
+                    // User pressed the 'back' button.
                 } else {
                     Log.d("Facebook-authorize", "Login canceled by user.");
                     mAuthDialogListener.onCancel();
@@ -406,21 +402,162 @@ public class Facebook {
     }
 
     /**
+     * Refresh OAuth access token method. Binds to Facebook for Android
+     * stand-alone application application to refresh the access token. This
+     * method tries to connect to the Facebook App which will handle the
+     * authentication flow, and return a new OAuth access token. This method
+     * will automatically replace the old token with a new one. Note that this
+     * method is asynchronous and the callback will be invoked in the original
+     * calling thread (not in a background thread).
+     *
+     * @param context         The Android Context that will be used to bind to the Facebook
+     *                        RefreshToken Service
+     * @param serviceListener Callback interface for notifying the calling application when
+     *                        the refresh request has completed or failed (can be null). In
+     *                        case of a success a new token can be found inside the result
+     *                        Bundle under Facebook.ACCESS_TOKEN key.
+     * @return true if the binding to the RefreshToken Service was created
+     */
+    public boolean extendAccessToken(Context context, ServiceListener serviceListener) {
+        Intent intent = new Intent();
+
+        intent.setClassName("com.facebook.katana",
+                "com.facebook.katana.platform.TokenRefreshService");
+
+        // Verify that the application whose package name is
+        // com.facebook.katana
+        // has the expected FB app signature.
+        if (!validateAppSignatureForIntent(context, intent)) {
+            return false;
+        }
+
+        return context.bindService(intent,
+                new TokenRefreshServiceConnection(context, serviceListener),
+                Context.BIND_AUTO_CREATE);
+    }
+
+    /**
+     * Calls extendAccessToken if shouldExtendAccessToken returns true.
+     *
+     * @return the same value as extendAccessToken if the the token requires
+     *         refreshing, true otherwise
+     */
+    public boolean extendAccessTokenIfNeeded(Context context, ServiceListener serviceListener) {
+        if (shouldExtendAccessToken()) {
+            return extendAccessToken(context, serviceListener);
+        }
+        return true;
+    }
+
+    /**
+     * Check if the access token requires refreshing.
+     *
+     * @return true if the last time a new token was obtained was over 24 hours ago.
+     */
+    public boolean shouldExtendAccessToken() {
+        return isSessionValid() &&
+                (System.currentTimeMillis() - mLastAccessUpdate >= REFRESH_TOKEN_BARRIER);
+    }
+
+    /**
+     * Handles connection to the token refresh service (this service is a part
+     * of Facebook App).
+     */
+    private class TokenRefreshServiceConnection implements ServiceConnection {
+
+        final Messenger messageReceiver = new Messenger(new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                String token = msg.getData().getString(TOKEN);
+                long expiresAt = msg.getData().getLong(EXPIRES) * 1000L;
+
+                // To avoid confusion we should return the expiration time in
+                // the same format as the getAccessExpires() function - that
+                // is in milliseconds.
+                Bundle resultBundle = (Bundle) msg.getData().clone();
+                resultBundle.putLong(EXPIRES, expiresAt);
+
+                if (token != null) {
+                    setAccessToken(token);
+                    setAccessExpires(expiresAt);
+                    if (serviceListener != null) {
+                        serviceListener.onComplete(resultBundle);
+                    }
+                } else if (serviceListener != null) { // extract errors only if client wants them
+                    String error = msg.getData().getString("error");
+                    if (msg.getData().containsKey("error_code")) {
+                        int errorCode = msg.getData().getInt("error_code");
+                        serviceListener.onFacebookError(new FacebookError(error, null, errorCode));
+                    } else {
+                        serviceListener.onError(new Error(error != null ? error
+                                : "Unknown service error"));
+                    }
+                }
+
+                // The refreshToken function should be called rarely,
+                // so there is no point in keeping the binding open.
+                applicationsContext.unbindService(TokenRefreshServiceConnection.this);
+            }
+        });
+
+        final ServiceListener serviceListener;
+        final Context applicationsContext;
+
+        Messenger messageSender = null;
+
+        public TokenRefreshServiceConnection(Context applicationsContext,
+                                             ServiceListener serviceListener) {
+            this.applicationsContext = applicationsContext;
+            this.serviceListener = serviceListener;
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            messageSender = new Messenger(service);
+            refreshToken();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg) {
+            serviceListener.onError(new Error("Service disconnected"));
+            // We returned an error so there's no point in
+            // keeping the binding open.
+            mAuthActivity.unbindService(TokenRefreshServiceConnection.this);
+        }
+
+        private void refreshToken() {
+            Bundle requestData = new Bundle();
+            requestData.putString(TOKEN, mAccessToken);
+
+            Message request = Message.obtain();
+            request.setData(requestData);
+            request.replyTo = messageReceiver;
+
+            try {
+                messageSender.send(request);
+            } catch (RemoteException e) {
+                serviceListener.onError(new Error("Service connection error"));
+            }
+        }
+    }
+
+    ;
+
+    /**
      * Invalidate the current user session by removing the access token in
      * memory, clearing the browser cookie, and calling auth.expireSession
      * through the API.
-     *
+     * <p/>
      * Note that this method blocks waiting for a network response, so do not
      * call it in a UI thread.
      *
-     * @param context
-     *            The Android context in which the logout should be called: it
-     *            should be the same context in which the login occurred in
-     *            order to clear any stored cookies
-     * @throws java.io.IOException
-     * @throws java.net.MalformedURLException
+     * @param context The Android context in which the logout should be called: it
+     *                should be the same context in which the login occurred in
+     *                order to clear any stored cookies
      * @return JSON string representation of the auth.expireSession response
-     *            ("true" if successful)
+     *         ("true" if successful)
+     * @throws IOException
+     * @throws MalformedURLException
      */
     public String logout(Context context)
             throws MalformedURLException, IOException {
@@ -437,29 +574,25 @@ public class Facebook {
      * Make a request to Facebook's old (pre-graph) API with the given
      * parameters. One of the parameter keys must be "method" and its value
      * should be a valid REST server API method.
-     *
+     * <p/>
      * See http://developers.facebook.com/docs/reference/rest/
-     *
+     * <p/>
      * Note that this method blocks waiting for a network response, so do not
      * call it in a UI thread.
-     *
+     * <p/>
      * Example:
      * <code>
-     *  Bundle parameters = new Bundle();
-     *  parameters.putString("method", "auth.expireSession");
-     *  String response = request(parameters);
+     * Bundle parameters = new Bundle();
+     * parameters.putString("method", "auth.expireSession");
+     * String response = request(parameters);
      * </code>
      *
-     * @param parameters
-     *            Key-value pairs of parameters to the request. Refer to the
-     *            documentation: one of the parameters must be "method".
-     * @throws java.io.IOException
-     *            if a network error occurs
-     * @throws java.net.MalformedURLException
-     *            if accessing an invalid endpoint
-     * @throws IllegalArgumentException
-     *            if one of the parameters is not "method"
+     * @param parameters Key-value pairs of parameters to the request. Refer to the
+     *                   documentation: one of the parameters must be "method".
      * @return JSON string representation of the response
+     * @throws IOException              if a network error occurs
+     * @throws MalformedURLException    if accessing an invalid endpoint
+     * @throws IllegalArgumentException if one of the parameters is not "method"
      */
     public String request(Bundle parameters)
             throws MalformedURLException, IOException {
@@ -473,19 +606,18 @@ public class Facebook {
 
     /**
      * Make a request to the Facebook Graph API without any parameters.
-     *
+     * <p/>
      * See http://developers.facebook.com/docs/api
-     *
+     * <p/>
      * Note that this method blocks waiting for a network response, so do not
      * call it in a UI thread.
      *
-     * @param graphPath
-     *            Path to resource in the Facebook graph, e.g., to fetch data
-     *            about the currently logged authenticated user, provide "me",
-     *            which will fetch http://graph.facebook.com/me
-     * @throws java.io.IOException
-     * @throws java.net.MalformedURLException
+     * @param graphPath Path to resource in the Facebook graph, e.g., to fetch data
+     *                  about the currently logged authenticated user, provide "me",
+     *                  which will fetch http://graph.facebook.com/me
      * @return JSON string representation of the response
+     * @throws IOException
+     * @throws MalformedURLException
      */
     public String request(String graphPath)
             throws MalformedURLException, IOException {
@@ -495,24 +627,22 @@ public class Facebook {
     /**
      * Make a request to the Facebook Graph API with the given string parameters
      * using an HTTP GET (default method).
-     *
+     * <p/>
      * See http://developers.facebook.com/docs/api
-     *
+     * <p/>
      * Note that this method blocks waiting for a network response, so do not
      * call it in a UI thread.
      *
-     * @param graphPath
-     *            Path to resource in the Facebook graph, e.g., to fetch data
-     *            about the currently logged authenticated user, provide "me",
-     *            which will fetch http://graph.facebook.com/me
-     * @param parameters
-     *            key-value string parameters, e.g. the path "search" with
-     *            parameters "q" : "facebook" would produce a query for the
-     *            following graph resource:
-     *            https://graph.facebook.com/search?q=facebook
-     * @throws java.io.IOException
-     * @throws java.net.MalformedURLException
+     * @param graphPath  Path to resource in the Facebook graph, e.g., to fetch data
+     *                   about the currently logged authenticated user, provide "me",
+     *                   which will fetch http://graph.facebook.com/me
+     * @param parameters key-value string parameters, e.g. the path "search" with
+     *                   parameters "q" : "facebook" would produce a query for the
+     *                   following graph resource:
+     *                   https://graph.facebook.com/search?q=facebook
      * @return JSON string representation of the response
+     * @throws IOException
+     * @throws MalformedURLException
      */
     public String request(String graphPath, Bundle parameters)
             throws MalformedURLException, IOException {
@@ -523,26 +653,23 @@ public class Facebook {
      * Synchronously make a request to the Facebook Graph API with the given
      * HTTP method and string parameters. Note that binary data parameters
      * (e.g. pictures) are not yet supported by this helper function.
-     *
+     * <p/>
      * See http://developers.facebook.com/docs/api
-     *
+     * <p/>
      * Note that this method blocks waiting for a network response, so do not
      * call it in a UI thread.
      *
-     * @param graphPath
-     *            Path to resource in the Facebook graph, e.g., to fetch data
-     *            about the currently logged authenticated user, provide "me",
-     *            which will fetch http://graph.facebook.com/me
-     * @param params
-     *            Key-value string parameters, e.g. the path "search" with
-     *            parameters {"q" : "facebook"} would produce a query for the
-     *            following graph resource:
-     *            https://graph.facebook.com/search?q=facebook
-     * @param httpMethod
-     *            http verb, e.g. "GET", "POST", "DELETE"
-     * @throws java.io.IOException
-     * @throws java.net.MalformedURLException
+     * @param graphPath  Path to resource in the Facebook graph, e.g., to fetch data
+     *                   about the currently logged authenticated user, provide "me",
+     *                   which will fetch http://graph.facebook.com/me
+     * @param params     Key-value string parameters, e.g. the path "search" with
+     *                   parameters {"q" : "facebook"} would produce a query for the
+     *                   following graph resource:
+     *                   https://graph.facebook.com/search?q=facebook
+     * @param httpMethod http verb, e.g. "GET", "POST", "DELETE"
      * @return JSON string representation of the response
+     * @throws IOException
+     * @throws MalformedURLException
      */
     public String request(String graphPath, Bundle params, String httpMethod)
             throws FileNotFoundException, MalformedURLException, IOException {
@@ -551,27 +678,24 @@ public class Facebook {
             params.putString(TOKEN, getAccessToken());
         }
         String url = (graphPath != null) ? GRAPH_BASE_URL + graphPath
-                                         : RESTSERVER_URL;
+                : RESTSERVER_URL;
         return Util.openUrl(url, httpMethod, params);
     }
 
     /**
      * Generate a UI dialog for the request action in the given Android context.
-     *
+     * <p/>
      * Note that this method is asynchronous and the callback will be invoked in
      * the original calling thread (not in a background thread).
      *
-     * @param context
-     *            The Android context in which we will generate this dialog.
-     * @param action
-     *            String representation of the desired method: e.g. "login",
-     *            "stream.publish", ...
-     * @param listener
-     *            Callback interface to notify the application when the dialog
-     *            has completed.
+     * @param context  The Android context in which we will generate this dialog.
+     * @param action   String representation of the desired method: e.g. "login",
+     *                 "stream.publish", ...
+     * @param listener Callback interface to notify the application when the dialog
+     *                 has completed.
      */
     public void dialog(Context context, String action,
-            DialogListener listener) {
+                       DialogListener listener) {
         dialog(context, action, new Bundle(), listener);
     }
 
@@ -593,7 +717,7 @@ public class Facebook {
      *            has completed.
      */
     public void dialog(Context context, String action, Bundle parameters,
-            final DialogListener listener) {
+                       final DialogListener listener) {
 
         Dialog dialog = getDialog(context, action, parameters, listener);
         if (dialog != null) {
@@ -622,7 +746,7 @@ public class Facebook {
      * @return the dialog
      */
     public Dialog getDialog(Context context, String action, Bundle parameters,
-            final DialogListener listener) {
+                            final DialogListener listener) {
 
         String endpoint = DIALOG_BASE_URL + action;
         parameters.putString("display", "touch");
@@ -681,34 +805,35 @@ public class Facebook {
     /**
      * Set the OAuth 2.0 access token for API access.
      *
-     * @param token
-     *            - access token
+     * @param token - access token
      */
     public void setAccessToken(String token) {
         mAccessToken = token;
+        mLastAccessUpdate = System.currentTimeMillis();
     }
 
     /**
      * Set the current session's expiration time (in milliseconds since Unix
      * epoch), or 0 if the session doesn't expire.
      *
-     * @param time
-     *            - timestamp in milliseconds
+     * @param time - timestamp in milliseconds
      */
     public void setAccessExpires(long time) {
         mAccessExpires = time;
     }
 
     /**
-     * Set the current session's duration (in seconds since Unix epoch).
+     * Set the current session's duration (in seconds since Unix epoch), or "0"
+     * if session doesn't expire.
      *
-     * @param expiresIn
-     *            - duration in seconds
+     * @param expiresIn - duration in seconds (or 0 if the session doesn't expire)
      */
     public void setAccessExpiresIn(String expiresIn) {
-        if (expiresIn != null && !expiresIn.equals("0")) {
-            setAccessExpires(System.currentTimeMillis()
-                    + Integer.parseInt(expiresIn) * 1000);
+        if (expiresIn != null) {
+            long expires = expiresIn.equals("0")
+                    ? 0
+                    : System.currentTimeMillis() + Long.parseLong(expiresIn) * 1000L;
+            setAccessExpires(expires);
         }
     }
 
@@ -722,41 +847,36 @@ public class Facebook {
 
     /**
      * Callback interface for dialog requests.
-     *
      */
     public static interface DialogListener {
 
         /**
          * Called when a dialog completes.
-         *
+         * <p/>
          * Executed by the thread that initiated the dialog.
          *
-         * @param values
-         *            Key-value string pairs extracted from the response.
+         * @param values Key-value string pairs extracted from the response.
          */
         public void onComplete(Bundle values);
 
         /**
          * Called when a Facebook responds to a dialog with an error.
-         *
+         * <p/>
          * Executed by the thread that initiated the dialog.
-         *
          */
         public void onFacebookError(FacebookError e);
 
         /**
          * Called when a dialog has an error.
-         *
+         * <p/>
          * Executed by the thread that initiated the dialog.
-         *
          */
         public void onError(DialogError e);
 
         /**
          * Called when a dialog is canceled by the user.
-         *
+         * <p/>
          * Executed by the thread that initiated the dialog.
-         *
          */
         public void onCancel();
 
@@ -810,6 +930,30 @@ public class Facebook {
             }
         });
         return dialog;
+    }
+
+    /**
+     * Callback interface for service requests.
+     */
+    public static interface ServiceListener {
+
+        /**
+         * Called when a service request completes.
+         *
+         * @param values Key-value string pairs extracted from the response.
+         */
+        public void onComplete(Bundle values);
+
+        /**
+         * Called when a Facebook server responds to the request with an error.
+         */
+        public void onFacebookError(FacebookError e);
+
+        /**
+         * Called when a Facebook Service responds to the request with an error.
+         */
+        public void onError(Error e);
+
     }
 
     public static final String FB_APP_SIGNATURE =
