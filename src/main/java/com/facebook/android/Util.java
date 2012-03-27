@@ -16,7 +16,6 @@
 
 package com.facebook.android;
 
-import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.os.Bundle;
@@ -38,9 +37,15 @@ import java.net.*;
 public final class Util {
 
     /**
+     * Set this to true to enable log output.  Remember to turn this back off
+     * before releasing.  Sending sensitive data to log is a security risk.
+     */
+    private static boolean ENABLE_LOG = false;
+
+    /**
      * Generate the multi-part post body providing the parameters and boundary
      * string
-     * 
+     *
      * @param parameters the parameters need to be posted
      * @param boundary the random string as boundary
      * @return a string of the post body
@@ -50,7 +55,7 @@ public final class Util {
         StringBuilder sb = new StringBuilder();
 
         for (String key : parameters.keySet()) {
-            if (parameters.get(key) instanceof byte[]) {
+            if (parameters.getByteArray(key) != null) {
                 continue;
             }
 
@@ -72,7 +77,7 @@ public final class Util {
         for (String key : parameters.keySet()) {
             if (first) first = false; else sb.append("&");
             sb.append(URLEncoder.encode(key) + "=" +
-                      URLEncoder.encode(parameters.getString(key)));
+                    URLEncoder.encode(parameters.getString(key)));
         }
         return sb.toString();
     }
@@ -111,7 +116,7 @@ public final class Util {
         }
     }
 
-    
+
     /**
      * Connect to an HTTP URL and return the response as a string.
      *
@@ -126,7 +131,7 @@ public final class Util {
      * @throws IOException - if a network problem occurs
      */
     public static String openUrl(String url, String method, Bundle params)
-          throws MalformedURLException, IOException {
+            throws MalformedURLException, IOException {
         // random string as boundary for multi-part http post
         String strBoundary = "3i2ndDfv2rTHiSisAbouNdArYfORhtTPEefj3q2f";
         String endLine = "\r\n";
@@ -136,9 +141,9 @@ public final class Util {
         if (method.equals("GET")) {
             url = url + "?" + encodeUrl(params);
         }
-        Log.d("Facebook-Util", method + " URL: " + url);
+        Util.logd("Facebook-Util", method + " URL: " + url);
         HttpURLConnection conn =
-            (HttpURLConnection) new URL(url).openConnection();
+                (HttpURLConnection) new URL(url).openConnection();
         conn.setRequestProperty("User-Agent", System.getProperties().
                 getProperty("http.agent") + " FacebookAndroidSDK");
         if (!method.equals("GET")) {
@@ -156,7 +161,7 @@ public final class Util {
 
             if (params.containsKey("access_token")) {
                 String decoded_token =
-                    URLDecoder.decode(params.getString("access_token"));
+                        URLDecoder.decode(params.getString("access_token"));
                 params.putString("access_token", decoded_token);
             }
 
@@ -215,7 +220,7 @@ public final class Util {
         // dialog in a WebView -- in which case the app crashes
         @SuppressWarnings("unused")
         CookieSyncManager cookieSyncMngr =
-            CookieSyncManager.createInstance(context);
+                CookieSyncManager.createInstance(context);
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.removeAllCookie();
     }
@@ -236,7 +241,7 @@ public final class Util {
      * @throws FacebookError - if an error condition is set
      */
     public static JSONObject parseJson(String response)
-          throws JSONException, FacebookError {
+            throws JSONException, FacebookError {
         // Edge case: when sending a POST request to /[post_id]/likes
         // the return value is 'true' or 'false'. Unfortunately
         // these values cause the JSONObject constructor to throw
@@ -287,10 +292,20 @@ public final class Util {
         Builder alertBuilder = new Builder(context);
         alertBuilder.setTitle(title);
         alertBuilder.setMessage(text);
-        AlertDialog dialog = alertBuilder.create();
-        try {
-            dialog.show();
-        } catch (Exception ignore) {}
+        alertBuilder.create().show();
     }
 
+    /**
+     * A proxy for Log.d api that kills log messages in release build. It
+     * not recommended to send sensitive information to log output in
+     * shipping apps.
+     *
+     * @param tag
+     * @param msg
+     */
+    public static void logd(String tag, String msg) {
+        if (ENABLE_LOG) {
+            Log.d(tag, msg);
+        }
+    }
 }
