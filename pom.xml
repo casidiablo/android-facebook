@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.codeslap</groupId>
     <artifactId>android-facebook</artifactId>
-    <version>1.5</version>
+    <version>1.6</version>
     <packaging>jar</packaging>
     <name>Stand-Alone Facebook SDK For Android</name>
 
