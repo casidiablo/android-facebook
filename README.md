@@ -4,7 +4,7 @@ through Maven.
 
 ###Download
 
-Latest version available is `1.5`:
+Latest version available is `1.6`:
 
 - [Download JAR][3]
 - [Download Sources][4]
@@ -25,7 +25,7 @@ You can use it from Maven by including this dependency and repository:
         <dependency>
             <groupId>com.codeslap</groupId>
             <artifactId>android-facebook</artifactId>
-            <version>1.5</version>
+            <version>1.6</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
@@ -41,6 +41,6 @@ You can use it from Maven by including this dependency and repository:
 
   [1]: https://github.com/facebook/facebook-android-sdk
   [2]: http://developer.android.com/guide/developing/projects/index.html#LibraryProjects
-  [3]: http://casidiablo.github.com/codeslap-maven/repository/com/codeslap/android-facebook/1.5/android-facebook-1.5.jar
-  [4]: http://casidiablo.github.com/codeslap-maven/repository/com/codeslap/android-facebook/1.5/android-facebook-1.5-sources.jar
-  [5]: http://casidiablo.github.com/codeslap-maven/repository/com/codeslap/android-facebook/1.5/android-facebook-1.5-javadoc.jar
+  [3]: http://casidiablo.github.com/codeslap-maven/repository/com/codeslap/android-facebook/1.6/android-facebook-1.6.jar
+  [4]: http://casidiablo.github.com/codeslap-maven/repository/com/codeslap/android-facebook/1.6/android-facebook-1.6-sources.jar
+  [5]: http://casidiablo.github.com/codeslap-maven/repository/com/codeslap/android-facebook/1.6/android-facebook-1.6-javadoc.jar
